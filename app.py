@@ -5,6 +5,7 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)  # Allow all CORS requests for now
 
+
 def extract_metadata(sb):
     """Extract metadata such as og:title, og:description, etc."""
     metadata = {}
@@ -24,6 +25,12 @@ def extract_metadata(sb):
     return metadata
 
 
+def clean_image_urls(image_urls):
+    """Remove duplicates and filter out non-HTTPS URLs."""
+    cleaned_urls = {url for url in image_urls if url and url.startswith("https://")}
+    return list(cleaned_urls)
+
+
 @app.route('/extract-content', methods=['POST'])
 def extract_content():
     data = request.json
@@ -40,6 +47,7 @@ def extract_content():
             # Extract image URLs
             items = sb.cdp.find_elements("img")
             image_urls = [item.get_attribute("src") for item in items]
+            image_urls = clean_image_urls(image_urls)  # Remove duplicates and non-HTTPS URLs
 
             # Extract metadata
             metadata = extract_metadata(sb)
