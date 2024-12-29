@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    service: ecom-scraper-api
+  name: ecom-scraper-api
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: ecom-scraper-api
+  template:
+    metadata:
+      labels:
+        service: ecom-scraper-api
+    spec:
+      containers:
+        - image: maksim1111/ecom-scraper:latest
+          name: ecom-scraper-api
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "2"
+            limits:
+              memory: "2Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    service: ecom-scraper-api
+  name: ecom-scraper-api
+  namespace: default
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    service: ecom-scraper-api
