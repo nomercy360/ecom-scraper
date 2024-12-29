@@ -1,8 +1,9 @@
 from flask import Flask, request, jsonify
 from seleniumbase import SB
+from flask_cors import CORS
 
 app = Flask(__name__)
-
+CORS(app)  # Allow all CORS requests for now
 
 def extract_metadata(sb):
     """Extract metadata such as og:title, og:description, etc."""

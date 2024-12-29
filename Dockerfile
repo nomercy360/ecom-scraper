@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN pip install --no-cache-dir flask
+RUN pip install --no-cache-dir flask flask-cors
 
 EXPOSE 5000
 
