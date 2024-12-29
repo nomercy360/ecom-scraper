@@ -8,4 +8,4 @@ RUN pip install --no-cache-dir flask
 
 EXPOSE 5000
 
-CMD ["python", "app.py"]
+CMD ["python3", "app.py"]
