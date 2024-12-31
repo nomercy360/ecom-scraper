@@ -51,18 +51,26 @@ def extract_content():
         return jsonify(cached_response), 200
 
     try:
-        with SB(uc=True, test=True, locale_code="en", pls="none", headless=True) as sb:
+        with SB(uc=True, test=True, locale_code="en", pls="none") as sb:
             sb.activate_cdp_mode(url)
             sb.execute_cdp_cmd(
-                'Network.setBlockedURLs', {"urls": ["*.png", "*.jpg", "*.jpeg", "*.svg", "*.gif", "*.css", "*.woff2"]})
+                'Network.setBlockedURLs',
+                {"urls": ["*.png", "*.jpg", "*.jpeg", "*.svg", "*.gif", "*.css", "*.woff2", "*.webp"]})
             sb.execute_cdp_cmd('Network.enable', {})
 
             sb.wait_for_ready_state_complete(timeout=10)
 
             # Extract image URLs
-            items = sb.cdp.find_elements("img")
-            image_urls = [item.get_attribute("src") for item in items]
-            image_urls = clean_image_urls(image_urls)  # Remove duplicates and non-HTTPS URLs
+            images = sb.execute_cdp_cmd("Runtime.evaluate", {
+                "expression": """
+                    Array.from(document.querySelectorAll('img'))
+                        .map(img => img.src)
+                        .filter(src => src.startsWith('https://'));
+                """,
+                "returnByValue": True
+            })["result"]["value"]
+
+            image_urls = clean_image_urls(images)
 
             # Extract metadata
             metadata = extract_metadata(sb)
