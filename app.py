@@ -54,28 +54,10 @@ def extract_content():
         with SB(uc=True, test=True, locale_code="en", pls="none", headless=True) as sb:
             sb.activate_cdp_mode(url)
             sb.execute_cdp_cmd(
-                'Network.setBlockedURLs', {"urls": [
-                    "*.js",
-                    "*.css",
-                    "*.png",
-                    "*.jpg",
-                    "*.jpeg",
-                    "*.gif",
-                    "*.svg",
-                    "*.woff",
-                    "*.woff2",
-                    "*.ttf",
-                    "*.eot",
-                    "*.ico",
-                    "*.mp4",
-                    "*.webm",
-                    "*.ogg",
-                    "*.mp3",
-                    "*.wav",
-                ]})
+                'Network.setBlockedURLs', {"urls": ["*.png", "*.jpg", "*.jpeg", "*.svg", "*.gif", "*.css", "*.woff2"]})
             sb.execute_cdp_cmd('Network.enable', {})
 
-            sb.wait_for_ready_state_complete(timeout=30)
+            sb.wait_for_ready_state_complete(timeout=10)
 
             # Extract image URLs
             items = sb.cdp.find_elements("img")
