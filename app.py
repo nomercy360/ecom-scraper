@@ -12,21 +12,24 @@ cache = Cache(app)
 
 
 def extract_metadata(sb):
-    """Extract metadata such as og:title, og:description, etc."""
-    metadata = {}
-    meta_elements = sb.cdp.find_elements("meta[property^='og:'], meta[name]")
-
-    for meta in meta_elements:
-        property_attr = meta.get_attribute("property")
-        name_attr = meta.get_attribute("name")
-        content_attr = meta.get_attribute("content")
-
-        # Look for `og:*` or other meta tags
-        if property_attr:
-            metadata[property_attr] = content_attr
-        elif name_attr:
-            metadata[name_attr] = content_attr
-
+    """Extract metadata using JavaScript."""
+    metadata = sb.execute_cdp_cmd("Runtime.evaluate", {
+        "expression": """
+            (() => {
+                const metaTags = document.querySelectorAll('meta[property^="og:"], meta[name]');
+                const metadata = {};
+                metaTags.forEach(meta => {
+                    const key = meta.getAttribute('property') || meta.getAttribute('name');
+                    const value = meta.getAttribute('content');
+                    if (key && value) {
+                        metadata[key] = value;
+                    }
+                });
+                return metadata;
+            })();
+        """,
+        "returnByValue": True
+    })["result"]["value"]
     return metadata
 
 
@@ -51,7 +54,7 @@ def extract_content():
         return jsonify(cached_response), 200
 
     try:
-        with SB(uc=True, test=True, locale_code="en", pls="none") as sb:
+        with SB(uc=True, test=True, locale_code="en", pls="none", headless=True) as sb:
             sb.activate_cdp_mode(url)
             sb.execute_cdp_cmd(
                 'Network.setBlockedURLs',
