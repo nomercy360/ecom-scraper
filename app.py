@@ -63,6 +63,9 @@ def extract_content():
 
             sb.wait_for_ready_state_complete(timeout=10)
 
+            # Wait until lazy loading images are loaded
+            sb.sleep(2)
+
             # Extract image URLs
             images = sb.execute_cdp_cmd("Runtime.evaluate", {
                 "expression": """
