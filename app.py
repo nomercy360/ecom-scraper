@@ -58,7 +58,14 @@ def extract_content():
             sb.activate_cdp_mode(url)
             sb.execute_cdp_cmd(
                 'Network.setBlockedURLs',
-                {"urls": ["*.png", "*.jpg", "*.jpeg", "*.svg", "*.gif", "*.css", "*.woff2", "*.webp"]})
+                {"urls": [
+                    "*.css",  # Stylesheets
+                    "*.woff", "*.woff2", "*.ttf", "*.eot",  # Fonts
+                    "*.mp4", "*.webm", "*.ogg", "*.mkv",  # Videos
+                    "*googlesyndication.com*", "*doubleclick.net*",  # Ads
+                    "*facebook.net*", "*analytics*", "*disqus.com*",  # Trackers & widgets
+                    "*.gif", "*.1x1.png"  # Tracking pixels
+                ]})
             sb.execute_cdp_cmd('Network.enable', {})
 
             sb.wait_for_ready_state_complete(timeout=10)
