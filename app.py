@@ -33,9 +33,31 @@ def extract_metadata(sb):
     return metadata
 
 
-def clean_image_urls(image_urls):
-    """Remove duplicates and filter out non-HTTPS URLs."""
-    cleaned_urls = {url for url in image_urls if url and url.startswith("https://")}
+def clean_image_urls(image_urls, base_url):
+    """Remove duplicates and convert relative URLs to absolute URLs."""
+    cleaned_urls = set()
+    for url in image_urls:
+        if not url:
+            continue
+            
+        # Strip any URL parameters or fragments
+        clean_url = url.split('?')[0].split('#')[0]
+        
+        # Handle absolute URLs
+        if clean_url.startswith("https://") or clean_url.startswith("http://"):
+            cleaned_urls.add(clean_url)
+        # Handle relative URLs
+        elif clean_url.startswith("/"):
+            domain = "/".join(base_url.split("/")[:3])
+            cleaned_urls.add(f"{domain}{clean_url}")
+        # Handle protocol-relative URLs
+        elif clean_url.startswith("//"):
+            cleaned_urls.add(f"https:{clean_url}")
+        # Handle relative URLs without leading slash
+        elif not clean_url.startswith(("http://", "https://", "/", "//")):
+            # Extract base directory from URL
+            base_dir = "/".join(base_url.split("/")[:-1]) + "/"
+            cleaned_urls.add(f"{base_dir}{clean_url}")
     return list(cleaned_urls)
 
 
@@ -73,17 +95,71 @@ def extract_content():
             # Wait until lazy loading images are loaded
             sb.sleep(2)
 
-            # Extract image URLs
+            # Extract only visible and sufficiently large image URLs, including srcset
             images = sb.execute_cdp_cmd("Runtime.evaluate", {
                 "expression": """
+                    function getBestSrcFromSrcset(srcset) {
+                        if (!srcset) return null;
+                        
+                        // Parse the srcset attribute
+                        const srcsetParts = srcset.split(',').map(part => {
+                            const [url, width] = part.trim().split(/\s+/);
+                            // Extract numeric width (remove the 'w')
+                            const numWidth = width ? parseInt(width.replace('w', '')) : 0;
+                            return { url, width: numWidth };
+                        });
+                        
+                        // Sort by width (descending) and return the largest image
+                        srcsetParts.sort((a, b) => b.width - a.width);
+                        return srcsetParts.length > 0 ? srcsetParts[0].url : null;
+                    }
+                    
                     Array.from(document.querySelectorAll('img'))
-                        .map(img => img.src)
-                        .filter(src => src.startsWith('https://'));
+                        .filter(img => {
+                            // Check if image is visible
+                            const rect = img.getBoundingClientRect();
+                            const style = window.getComputedStyle(img);
+                            
+                            // Minimum dimensions for non-icon/logo images (in pixels)
+                            const MIN_WIDTH = 100;
+                            const MIN_HEIGHT = 100;
+                            const MIN_AREA = 10000; // width * height
+                            
+                            // Calculate actual dimensions
+                            const area = rect.width * rect.height;
+                            
+                            return rect.width >= MIN_WIDTH && 
+                                   rect.height >= MIN_HEIGHT && 
+                                   area >= MIN_AREA &&
+                                   style.display !== 'none' && 
+                                   style.visibility !== 'hidden' &&
+                                   parseFloat(style.opacity) > 0;
+                        })
+                        .flatMap(img => {
+                            const urls = [];
+                            
+                            // Get the src attribute
+                            if (img.src) {
+                                urls.push(img.src);
+                            }
+                            
+                            // Get the best image from srcset if available
+                            const srcset = img.getAttribute('srcset') || img.dataset.srcset;
+                            if (srcset) {
+                                const bestSrc = getBestSrcFromSrcset(srcset);
+                                if (bestSrc) {
+                                    urls.push(bestSrc);
+                                }
+                            }
+                            
+                            return urls;
+                        });
                 """,
-                "returnByValue": True
+                "returnByValue": True,
+                "awaitPromise": True,
             })["result"]["value"]
 
-            image_urls = clean_image_urls(images)
+            image_urls = clean_image_urls(images, url)
 
             # Extract metadata
             metadata = extract_metadata(sb)
