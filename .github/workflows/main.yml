@@ -38,7 +38,7 @@ jobs:
         run: sed -i 's|maksim1111/ecom-scraper:latest|${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}|' $GITHUB_WORKSPACE/deployment/app.yml
 
       - name: Save DigitalOcean kubeconfig with short-lived credentials
-        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 k8s-apps-cluster
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 k8s-fra1
 
       - name: Deploy to DigitalOcean Kubernetes
         run: kubectl apply -f $GITHUB_WORKSPACE/deployment
