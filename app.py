@@ -11,6 +11,19 @@ app.config['CACHE_DEFAULT_TIMEOUT'] = 300  # Cache timeout in seconds
 cache = Cache(app)
 
 
+def clean_url(url):
+    if not url:
+        return ""
+    return url.strip()
+
+
+def is_valid_url(url):
+    if not url:
+        return False
+
+    return url.startswith('http://') or url.startswith('https://')
+
+
 def extract_metadata(sb):
     """Extract metadata using JavaScript."""
     metadata = sb.execute_cdp_cmd("Runtime.evaluate", {
@@ -68,6 +81,11 @@ def extract_content():
 
     if not url:
         return jsonify({"error": "URL is required"}), 400
+
+    url = clean_url(url)
+
+    if not is_valid_url(url):
+        return jsonify({"error": "Invalid URL format. URL must start with http:// or https://"}), 400
 
     # Check cache for existing response
     cache_key = f"content_{url}"
