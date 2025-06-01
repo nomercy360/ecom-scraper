@@ -254,7 +254,7 @@ def extract_product_info_from_html(html_content):
             types.Content(
                 role="user",
                 parts=[
-                    types.Part.from_text(text=f'Extract from html: product price if available, product images, product name:\n{html_content}'),
+                    types.Part.from_text(text=f'Extract from html: product price if available, currency code (ISO 4217), product images, product name:\n{html_content}'),
                 ],
             ),
         ]
@@ -271,7 +271,7 @@ def extract_product_info_from_html(html_content):
                     "price": genai.types.Schema(
                         type=genai.types.Type.NUMBER,
                     ),
-                    "currency": genai.types.Schema(
+                    "currency_code": genai.types.Schema(
                         type=genai.types.Type.STRING,
                     ),
                     "product_name": genai.types.Schema(
@@ -383,8 +383,8 @@ def extract_content():
                     response = {
                         "product_name": product_info.get("product_name"),
                         "price": product_info.get("price"),
-                        "currency": product_info.get("currency"),
-                        "images": clean_image_urls(product_info.get("images", []), url),
+                        "currency": product_info.get("currency_code"),
+                        "image_urls": clean_image_urls(product_info.get("images", []), url),
                         "metadata": extract_metadata(sb),
                         "extracted_with": "ai"
                     }
