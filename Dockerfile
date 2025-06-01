@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN pip install --no-cache-dir flask flask-cors flask-caching
+RUN pip install --no-cache-dir flask flask-cors flask-caching google-genai
 
 EXPOSE 5000
 

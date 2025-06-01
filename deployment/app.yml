@@ -19,6 +19,9 @@ spec:
         - image: maksim1111/ecom-scraper:latest
           name: ecom-scraper-api
           imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: ecom-scraper-secrets
           ports:
             - containerPort: 8080
               name: http

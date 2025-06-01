@@ -6,3 +6,4 @@ __pycache__/
 .venv/
 .idea/
 downloaded_files/
+config.production.yml
